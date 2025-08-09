@@ -7,11 +7,15 @@ name = "frc-regwatch"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "gitdb" },
     { name = "gitpython" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "gitpython", specifier = ">=3.1.45" }]
+requires-dist = [
+    { name = "gitdb", specifier = ">=4.0.12" },
+    { name = "gitpython", specifier = ">=3.1.45" },
+]
 
 [[package]]
 name = "gitdb"
