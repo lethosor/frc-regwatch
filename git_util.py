@@ -4,7 +4,10 @@ import os
 import tempfile
 from dataclasses import dataclass
 
+import git
 import gitdb
+
+EMPTY_TREE_SHA = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
 @dataclass
@@ -13,17 +16,27 @@ class GitFileContents:
     mode: str = "100644"  # default: regular file
 
 
+def ensure_branch(
+    *,
+    repo: git.Repo,
+    branch: str,
+):
+    if branch not in repo.heads:
+        new_commit_sha = repo.git.commit_tree(EMPTY_TREE_SHA, "-m", "initialize")
+        repo.git.update_ref(f"refs/heads/{branch}", new_commit_sha)
+
+
 def commit_subdir_contents(
     *,
     repo,  # git.Repo
-    branch,
-    subdir,
+    branch: str,
+    subdir: str,
     files: dict[str, GitFileContents],  # key is path relative to `subdir`
-    message,
+    message: str,
     author: tuple[str, str],  # name, email
-    committer=None,  # default: author
-    author_date=None,  # default: now
-    committer_date=None,  # default: author_date
+    committer: tuple[str, str] = None,  # default: author
+    author_date: datetime.datetime = None,  # default: now
+    committer_date: datetime.datetime = None,  # default: author_date
 ):
     def to_git_path(p):
         return p.replace("\\", "/").lstrip("/")
