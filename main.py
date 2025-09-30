@@ -20,7 +20,7 @@ def event_teams_to_files(
 
 
 def main():
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.UTC)
 
     clients = {
         "tba": download.TBAClient,
@@ -52,7 +52,7 @@ def main():
         branch=args.target_repo_branch,
         subdir=args.target_repo_subdir,
         files=file_contents,
-        message=f"{args.year} event teams at " + now.strftime("%Y-%m-%d-%H%M"),
+        message=f"{args.year} event teams at " + now.strftime("%Y-%m-%d-%H%MZ"),
         author=("frc-regwatch", "frc-regwatch"),
         author_date=now,
     )
