@@ -1,0 +1,33 @@
+name: Run
+
+on:
+  schedule:
+  - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  run:
+    strategy:
+      matrix:
+        client: [tba]
+        year: [2025, 2026]
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone
+      uses: actions/checkout@v5
+    - name: Set env
+      run: |
+        echo "REGWATCH_BRANCH=data-${{matrix.year}}-${{matrix.client}}" >> "$GITHUB_ENV"
+        echo "${{secrets.TBA_KEY}}" >> .tba.key
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+    - name: Run script
+      run: |
+        uv run main.py \
+          --year ${{matrix.year}} \
+          --client ${{matrix.client}} \
+          --target-repo-root . \
+          --target-repo-branch "${REGWATCH_BRANCH}"
+    - name: Push
+      run: git push origin "${REGWATCH_BRANCH}"
