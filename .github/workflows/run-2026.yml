@@ -11,5 +11,6 @@ on:
 jobs:
   run:
     uses: ./.github/workflows/run.yml
+    secrets: inherit
     with:
       year: 2026
