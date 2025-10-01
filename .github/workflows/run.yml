@@ -28,6 +28,9 @@ jobs:
         echo "${{secrets.TBA_KEY}}" >> .tba.key
         git config user.name regwatch
         git config user.email regwatch
+    - name: Set up repo
+      run: |
+        git pull origin "${REGWATCH_BRANCH}:${REGWATCH_BRANCH}" --rebase
     - name: Install uv
       uses: astral-sh/setup-uv@v6
     - name: Run script
