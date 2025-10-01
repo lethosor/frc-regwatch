@@ -34,6 +34,7 @@ def main():
     parser.add_argument("--target-repo-root", default=".")
     parser.add_argument("--target-repo-branch", help="default: data-{client}")
     parser.add_argument("--target-repo-subdir", help="default: data/{year}")
+    parser.add_argument("--target-repo-remote", default="origin")
     args = parser.parse_args()
 
     if args.target_repo_branch is None:
@@ -43,13 +44,22 @@ def main():
 
     repo = git.Repo(args.target_repo_root)
 
+    remote = repo.remotes[args.target_repo_remote]
+    branch_name = args.target_repo_branch
+    print(f"Pulling branch {args.target_repo_remote}/{branch_name}")
+    remote.fetch()
+    if branch_name in remote.refs:
+        remote.pull(f"{branch_name}:{branch_name}")
+    else:
+        print(f"Branch {branch_name!r} does not exist on remote - will be created")
+
     client = clients[args.client]()
     event_teams = client.get_all_event_teams(year=args.year)
     file_contents = event_teams_to_files(event_teams)
-    git_util.ensure_branch(repo=repo, branch=args.target_repo_branch)
+    git_util.ensure_branch(repo=repo, branch=branch_name)
     git_util.commit_subdir_contents(
         repo=repo,
-        branch=args.target_repo_branch,
+        branch=branch_name,
         subdir=args.target_repo_subdir,
         files=file_contents,
         message=f"{args.year} event teams at " + now.strftime("%Y-%m-%d-%H%MZ"),
