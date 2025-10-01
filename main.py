@@ -24,6 +24,7 @@ def main():
 
     clients = {
         "tba": download.TBAClient,
+        "frc": download.FRCClient,
         "dummy": download.DummyClient,
     }
 

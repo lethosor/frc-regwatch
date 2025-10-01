@@ -1,3 +1,4 @@
+import base64
 import http
 import os
 from concurrent.futures import ThreadPoolExecutor
@@ -10,7 +11,17 @@ from tqdm import tqdm
 
 @dataclass
 class Event:
-    key: str
+    key: str  # == str(year) + code
+    code: str
+    year: int
+
+    @classmethod
+    def from_key(cls, key: str):
+        return cls(key=key, year=int(key[:4]), code=key[4:])
+
+    @classmethod
+    def from_year_and_code(cls, year: int, code: str):
+        return cls(key=str(year) + code, year=year, code=code)
 
 
 def wrap_retry_requests(func):
@@ -81,12 +92,7 @@ class TBAClient(Client):
 
     def get_all_events(self, year):
         res = self._request(f"events/{year}")
-        return [
-            Event(
-                key=event["key"],
-            )
-            for event in res
-        ]
+        return [Event.from_key(event["key"]) for event in res]
 
     def get_event_teams(self, event):
         res = self._request(f"event/{event.key}/teams/keys")
@@ -103,13 +109,42 @@ class TBAClient(Client):
         return res.json()
 
 
+class FRCClient(Client):
+    def __init__(self):
+        with open(os.environ.get("FRC_KEY_PATH", ".frc.key")) as f:
+            self.api_user, self.api_key = f.read().strip().split(":")
+
+    def get_all_events(self, year):
+        res = self._request(f"{year}/events")
+        return [
+            Event.from_year_and_code(year, event["code"].lower())
+            for event in res["Events"]
+        ]
+
+    def get_event_teams(self, event):
+        res = self._request(f"{event.year}/teams", {"eventCode": event.code.upper()})
+        return [int(team["teamNumber"]) for team in res["teams"]]
+
+    def _request(self, route, params=None):
+        res = requests.get(
+            f"https://frc-api.firstinspires.org/v3.0/{route.lstrip('/')}",
+            params=params,
+            headers={
+                "Authorization": "Basic "
+                + base64.b64encode(f"{self.api_user}:{self.api_key}".encode()).decode(),
+            },
+        )
+        res.raise_for_status()
+        return res.json()
+
+
 class DummyClient(Client):
     def get_all_events(self, year):
         return [
-            Event(key=f"{year}test1"),
-            Event(key=f"{year}test2"),
-            Event(key=f"{year}test3"),
-            Event(key=f"{year}test4"),
+            Event.from_key(f"{year}test1"),
+            Event.from_year_and_code(year, "test2"),
+            Event.from_year_and_code(year, "test3"),
+            Event.from_year_and_code(year, "test4"),
         ]
 
     def get_event_teams(self, event):
