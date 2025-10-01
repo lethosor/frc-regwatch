@@ -72,7 +72,7 @@ class Client:
                 unit="events",
             )
         )
-        return {event.key: teams for (event, teams) in results}
+        return {event.key: sorted(teams) for (event, teams) in results}
 
     def validate_events(self, events: list[Event]):
         seen_keys = set()
@@ -153,6 +153,6 @@ class DummyClient(Client):
         time.sleep(0.5)
         return [
             int(event.key[-1]),
-            int(event.key[-1]) * 11,
             int(event.key[-1]) * 111,
+            int(event.key[-1]) * 11,
         ]
