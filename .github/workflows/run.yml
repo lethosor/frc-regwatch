@@ -20,6 +20,8 @@ jobs:
     steps:
     - name: Clone
       uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
     - name: Set env
       run: |
         echo "REGWATCH_BRANCH=data-${{matrix.year}}-${{matrix.client}}" >> "$GITHUB_ENV"
