@@ -15,7 +15,7 @@ jobs:
   run:
     strategy:
       matrix:
-        client: [tba]
+        client: [tba, frc]
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
@@ -27,6 +27,7 @@ jobs:
       run: |
         echo "REGWATCH_BRANCH=data-${{inputs.year}}-${{matrix.client}}" >> "$GITHUB_ENV"
         echo "${{secrets.TBA_KEY}}" >> .tba.key
+        echo "${{secrets.FRC_KEY}}" >> .frc.key
         git config user.name regwatch
         git config user.email regwatch
     - name: Set up repo
