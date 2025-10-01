@@ -1,20 +1,21 @@
 name: Run
 
 on:
-  schedule:
-  - cron: '0 7 * * *'
-  - cron: '0 7/6 * 10 *'
-  - cron: '0 7/12 * 11 *'
-  - cron: '0 * 3 10 *'    # day after 2025 round 1 close
-  - cron: '0 * 24 10 *'   # day after 2025 round 2 close
+  workflow_call:
+    inputs: &inputs
+      year:
+        required: true
+        type: number
+        default: 2026
+        description: Year (season end)
   workflow_dispatch:
+    inputs: *inputs
 
 jobs:
   run:
     strategy:
       matrix:
         client: [tba]
-        year: [2025, 2026]
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
@@ -24,7 +25,7 @@ jobs:
         fetch-depth: 0
     - name: Set env
       run: |
-        echo "REGWATCH_BRANCH=data-${{matrix.year}}-${{matrix.client}}" >> "$GITHUB_ENV"
+        echo "REGWATCH_BRANCH=data-${{inputs.year}}-${{matrix.client}}" >> "$GITHUB_ENV"
         echo "${{secrets.TBA_KEY}}" >> .tba.key
         git config user.name regwatch
         git config user.email regwatch
@@ -36,7 +37,7 @@ jobs:
     - name: Run script
       run: |
         uv run main.py \
-          --year ${{matrix.year}} \
+          --year ${{inputs.year}} \
           --client ${{matrix.client}} \
           --target-repo-root . \
           --target-repo-branch "${REGWATCH_BRANCH}"
