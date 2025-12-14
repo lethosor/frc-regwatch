@@ -18,5 +18,5 @@ This is the condensed format used to pack data used by the frontend.
     * `timestamp`: `int32`: timestamp of this snapshot, in seconds since `2025-01-01T00:00:00+0000` (to delay Y2K38 issues a while)
     * `n_events`: `int16`: number of events in this snapshot
     * repeated `n_events` times:
-        * `event_index`: `int16`: index into the event codes array of this event
+        * `event_code_index`: `int16`: index into the event codes array of this event
         * `teamlist_index`: `int16`: index into the team lists array of the team list for this event

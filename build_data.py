@@ -6,6 +6,7 @@ import datetime
 import fnmatch
 import gzip
 import io
+import json
 import os
 import re
 import struct
@@ -136,6 +137,71 @@ def encode_data_file(data: list[EventTeamsSnapshot], year: int) -> bytes:
         return gzip.compress(out.getvalue())
 
 
+def encode_data_json(data: list[EventTeamsSnapshot]) -> str:
+    return json.dumps(data, cls=JSONDataEncoder)
+
+
+class DataFileReader(io.BytesIO):
+    def read_int16(self) -> int:
+        return struct.unpack("<h", self.read(2))[0]
+
+    def read_int32(self) -> int:
+        return struct.unpack("<i", self.read(4))[0]
+
+    def read_str(self) -> str:
+        out = b""
+        while (ch := self.read(1)) not in (b"\x00", b""):
+            out += ch
+        return out.decode()
+
+
+def decode_data_file(contents: bytes) -> list[EventTeamsSnapshot]:
+    out = []
+    with DataFileReader(gzip.decompress(contents)) as buf:
+        year = buf.read_int16()
+
+        event_codes = []
+        num_event_codes = buf.read_int16()
+        for _ in range(num_event_codes):
+            event_codes.append(buf.read_str())
+
+        team_lists = []
+        num_team_lists = buf.read_int16()
+        for _ in range(num_team_lists):
+            teams = []
+            num_teams = buf.read_int16()
+            for _ in range(num_teams):
+                teams.append(buf.read_int16())
+            team_lists.append(teams)
+
+        num_snapshots = buf.read_int16()
+        for _ in range(num_snapshots):
+            snapshot_time_utc = datetime.datetime.fromtimestamp(
+                buf.read_int32() + TIMESTAMP_BASE.timestamp(), tz=datetime.timezone.utc
+            )
+            snapshot = EventTeamsSnapshot(timestamp=snapshot_time_utc, events=[])
+            num_events = buf.read_int16()
+            for _ in range(num_events):
+                event_code = event_codes[buf.read_int16()]
+                team_list = team_lists[buf.read_int16()]
+                snapshot.events.append(
+                    EventTeamList(event_code=event_code, teams=team_list)
+                )
+            out.append(snapshot)
+
+        assert not buf.read()
+    return out
+
+
+class JSONDataEncoder(json.JSONEncoder):
+    def default(self, value):
+        if isinstance(value, datetime.datetime):
+            return int(value.timestamp())
+        if dataclasses.is_dataclass(value):
+            return dataclasses.asdict(value)
+        return super().default(value)
+
+
 @contextlib.contextmanager
 def log_time(desc: str):
     t1 = time.perf_counter()
@@ -212,6 +278,11 @@ def main():
                         "wb",
                     ) as f:
                         f.write(encoded)
+
+    if args.dump_json:
+        with log_time("write json"):
+            with open(args.dump_json, "w") as f:
+                json.dump(data, f, cls=JSONDataEncoder)
 
     return data
 
