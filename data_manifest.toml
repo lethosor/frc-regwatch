@@ -1,0 +1,23 @@
+[[dataset]]
+year = 2025
+group = "frc"
+branch = "data-2025-frc"
+match_files = ["data/2025/2025*.teams.txt"]
+
+[[dataset]]
+year = 2025
+group = "tba"
+branch = "data-2025-tba"
+match_files = ["data/2025/2025*.teams.txt"]
+
+[[dataset]]
+year = 2026
+group = "frc"
+branch = "data-2026-frc"
+match_files = ["data/2026/2026*.teams.txt"]
+
+[[dataset]]
+year = 2026
+group = "tba"
+branch = "data-2026-tba"
+match_files = ["data/2026/2026*.teams.txt"]
