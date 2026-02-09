@@ -95,7 +95,11 @@ class TBAClient(Client):
         return [Event.from_key(event["key"]) for event in res]
 
     def get_event_teams(self, event):
-        res = self._request(f"event/{event.key}/teams/keys")
+        try:
+            res = self._request(f"event/{event.key}/teams/keys")
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                return []
         return [int(team_key.removeprefix("frc")) for team_key in res]
 
     def _request(self, route):
@@ -122,7 +126,13 @@ class FRCClient(Client):
         ]
 
     def get_event_teams(self, event):
-        res = self._request(f"{event.year}/teams", {"eventCode": event.code.upper()})
+        try:
+            res = self._request(
+                f"{event.year}/teams", {"eventCode": event.code.upper()}
+            )
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                return []
         return [int(team["teamNumber"]) for team in res["teams"]]
 
     def _request(self, route, params=None):
