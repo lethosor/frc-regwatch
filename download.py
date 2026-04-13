@@ -133,7 +133,15 @@ class FRCClient(Client):
         except requests.HTTPError as e:
             if e.response.status_code == 404:
                 return []
-        return [int(team["teamNumber"]) for team in res["teams"]]
+
+        all_teams = res["teams"][:]
+        for page in range(2, res["pageTotal"] + 1):
+            next_res = self._request(
+                f"{event.year}/teams", {"eventCode": event.code.upper(), "page": page}
+            )
+            all_teams += next_res["teams"]
+
+        return [int(team["teamNumber"]) for team in all_teams]
 
     def _request(self, route, params=None):
         res = requests.get(
