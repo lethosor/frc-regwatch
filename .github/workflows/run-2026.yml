@@ -8,6 +8,7 @@ on:
   - cron: '0 * 24 10 *'   # day after 2025 round 2 close
   - cron: '0 7 * * *'
   - cron: '0 */3 13-15 4 *'  # week 7 dcmp registration
+  - cron: '0 */3 22-24 4 *'  # week 8 cmp registration
   - cron: '0 */12 16 4 *'
   workflow_dispatch:
 
