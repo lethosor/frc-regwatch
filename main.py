@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import json
 import os
 
 import git
@@ -57,8 +58,10 @@ def main():
             print(f"Branch {branch_name!r} does not exist on remote - will be created")
 
     client = clients[args.client]()
+    event_info = client.get_all_event_info_raw(year=args.year)
     event_teams = client.get_all_event_teams(year=args.year)
     file_contents = event_teams_to_files(event_teams)
+    file_contents["events.json"] = git_util.GitFileContents(data=json.dumps(event_info))
     git_util.ensure_branch(repo=repo, branch=branch_name)
     git_util.commit_subdir_contents(
         repo=repo,

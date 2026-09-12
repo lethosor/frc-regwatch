@@ -50,6 +50,9 @@ def tqdm_dynamic_description(iterable, *, get_description, **kwargs):
 class Client:
     thread_count = 3
 
+    def get_all_event_info_raw(self, year: int) -> list[dict]:
+        raise NotImplementedError
+
     def get_all_events(self, year: int) -> list[Event]:
         raise NotImplementedError
 
@@ -90,6 +93,12 @@ class TBAClient(Client):
         with open(os.environ.get("TBA_KEY_PATH", ".tba.key")) as f:
             self.api_key = f.read().strip()
 
+    def get_all_event_info_raw(self, year):
+        return sorted(
+            self._request(f"events/{year}"),
+            key=lambda e: (e["start_date"], e["key"]),
+        )
+
     def get_all_events(self, year):
         res = self._request(f"events/{year}")
         return [Event.from_key(event["key"]) for event in res]
@@ -117,6 +126,12 @@ class FRCClient(Client):
     def __init__(self):
         with open(os.environ.get("FRC_KEY_PATH", ".frc.key")) as f:
             self.api_user, self.api_key = f.read().strip().split(":")
+
+    def get_all_event_info_raw(self, year):
+        return sorted(
+            self._request(f"{year}/events")["Events"],
+            key=lambda e: (e["dateStart"], e["code"]),
+        )
 
     def get_all_events(self, year):
         res = self._request(f"{year}/events")
@@ -157,6 +172,9 @@ class FRCClient(Client):
 
 
 class DummyClient(Client):
+    def get_all_event_info_raw(self, year):
+        return [{"event": f"{year}test{i}"} for i in range(1, 4 + 1)]
+
     def get_all_events(self, year):
         return [
             Event.from_key(f"{year}test1"),
